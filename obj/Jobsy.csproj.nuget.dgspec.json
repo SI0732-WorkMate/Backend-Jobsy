@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy\\Jobsy.csproj": {}
+    "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj": {}
   },
   "projects": {
-    "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy\\Jobsy.csproj": {
+    "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy\\Jobsy.csproj",
+        "projectUniqueName": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj",
         "projectName": "Jobsy",
-        "projectPath": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy\\Jobsy.csproj",
+        "projectPath": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj",
         "packagesPath": "C:\\Users\\villa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy\\obj\\",
+        "outputPath": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\villa\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -40,7 +40,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net9.0": {
@@ -110,7 +110,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

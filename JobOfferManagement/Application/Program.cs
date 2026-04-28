@@ -96,7 +96,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173", "http://localhost:5174") // Vue dev server
+            policy.WithOrigins("http://localhost:5173", "https://tu-app.vercel.app") // Vue dev server
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
@@ -130,8 +130,8 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
-
+//app.UseHttpsRedirection();
+app.UseCors("ProductionPolicy");
 //  antes de auth y controllers
 app.UseCors("AllowAll");
 
@@ -139,8 +139,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseHttpsRedirection();
 
 app.Run();
 
