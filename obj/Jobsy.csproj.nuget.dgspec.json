@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj": {}
+    "C:\\Users\\Jasmin\\RiderProjects\\Backend-Jobsy\\Jobsy.csproj": {}
   },
   "projects": {
-    "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj": {
+    "C:\\Users\\Jasmin\\RiderProjects\\Backend-Jobsy\\Jobsy.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj",
+        "projectUniqueName": "C:\\Users\\Jasmin\\RiderProjects\\Backend-Jobsy\\Jobsy.csproj",
         "projectName": "Jobsy",
-        "projectPath": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\Jobsy.csproj",
-        "packagesPath": "C:\\Users\\villa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\villa\\Desktop\\JOBSY_BACKEND\\obj\\",
+        "projectPath": "C:\\Users\\Jasmin\\RiderProjects\\Backend-Jobsy\\Jobsy.csproj",
+        "packagesPath": "C:\\Users\\Jasmin\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Jasmin\\RiderProjects\\Backend-Jobsy\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\villa\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Jasmin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -102,6 +102,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[9.0.15, 9.0.15]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.15, 9.0.15]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.15, 9.0.15]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[9.0.15, 9.0.15]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
