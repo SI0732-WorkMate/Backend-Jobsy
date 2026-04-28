@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using Jobsy.UserAuthentication.Domain.Exception;
 using Jobsy.UserAuthentication.Domain.Model.Commands;
 using Jobsy.UserAuthentication.Domain.Model.Queries;
@@ -17,12 +17,28 @@ public class UserController : ControllerBase
     {
         _mediator = mediator;
     }
-    
-    
-    //resgitro
+
+    // ENDPOINT DE DIAGNÓSTICO TEMPORAL - muestra los claims del token tal como los ve el backend
+    [Authorize]
+    [HttpGet("debug-claims")]
+    public IActionResult DebugClaims()
+    {
+        var claims = User.Claims.Select(c => new { type = c.Type, value = c.Value }).ToList();
+        var isInRoleCandidate = User.IsInRole("CANDIDATE");
+        var isInRoleEmployer = User.IsInRole("EMPLOYER");
+        return Ok(new {
+            claims,
+            isInRoleCandidate,
+            isInRoleEmployer,
+            identity_name = User.Identity?.Name,
+            is_authenticated = User.Identity?.IsAuthenticated
+        });
+    }
+
+    //registro
     [HttpPost]
     public async Task<IActionResult> RegistrarUsuario([FromBody] RegisterUserCommand command)
-    { 
+    {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
@@ -36,13 +52,12 @@ public class UserController : ControllerBase
             return BadRequest(new { mensaje = ex.Message });
         }
     }
-    
-    //prueba del toquen Bearer tu_token_aqui
+
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetProfile()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return Unauthorized(new { message = "Token inválido." });
@@ -62,8 +77,7 @@ public class UserController : ControllerBase
             user.created_at
         });
     }
-    
-    //ingresar
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserCommand command)
     {
@@ -77,7 +91,7 @@ public class UserController : ControllerBase
             return Unauthorized(new { message = ex.Message });
         }
     }
-    
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserById(int id)
     {
@@ -91,5 +105,4 @@ public class UserController : ControllerBase
             return NotFound(new { mensaje = ex.Message });
         }
     }
-    
 }

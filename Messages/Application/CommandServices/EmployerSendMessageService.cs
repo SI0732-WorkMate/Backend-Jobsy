@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using Jobsy.Messages.Domain.Model.Aggregates;
 using Jobsy.Messages.Domain.Model.Commands;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 namespace Jobsy.Messages.Application.CommandServices;
 
 public class EmployerSendMessageService : IRequestHandler<EmployerSendMessageCommand, string>
-
 {
     private readonly AppDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -22,10 +21,13 @@ public class EmployerSendMessageService : IRequestHandler<EmployerSendMessageCom
     public async Task<string> Handle(EmployerSendMessageCommand request, CancellationToken cancellationToken)
     {
         var user = _httpContextAccessor.HttpContext?.User;
-        var senderId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+        var senderId = user?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var role = user?.FindFirst("role")?.Value;
 
-        if (string.IsNullOrEmpty(senderId) || role != "EMPLOYER")
+        // Aceptar tanto "EMPLOYER" como "1" por si el enum se serializa como número
+        bool isEmployer = role == "EMPLOYER" || role == "1";
+
+        if (string.IsNullOrEmpty(senderId) || !isEmployer)
             throw new UnauthorizedAccessException("Solo empleadores pueden enviar mensajes.");
 
         // Validar que el receiver (candidato) haya postulado a alguna oferta del employer

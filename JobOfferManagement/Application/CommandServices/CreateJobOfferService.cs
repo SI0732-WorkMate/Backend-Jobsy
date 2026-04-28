@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Jobsy.Recruiter.JobOfferManagement.Domain.Model.Aggregates;
 using Jobsy.Recruiter.JobOfferManagement.Domain.Model.Commands;
@@ -19,7 +20,7 @@ public class CreateJobOfferService : IRequestHandler<CreateJobOfferCommand, stri
 
     public async Task<string> Handle(CreateJobOfferCommand request, CancellationToken cancellationToken)
     {
-        var userId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = _httpContextAccessor.HttpContext?.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             throw new UnauthorizedAccessException("No se pudo identificar al usuario.");

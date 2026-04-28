@@ -17,12 +17,19 @@ public class JobOfferController : ControllerBase
         _mediator = mediator;
     }
 
-    [Authorize(Roles = "EMPLOYER")]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateJobOfferCommand command)
     {
-        var id = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetById), new { id }, new { id });
+        try
+        {
+            var id = await _mediator.Send(command);
+            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [AllowAnonymous]
@@ -47,20 +54,34 @@ public class JobOfferController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "EMPLOYER")]
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateJobOfferCommand command)
     {
-        var fullCommand = command with { id = id };
-        await _mediator.Send(fullCommand);
-        return NoContent();
+        try
+        {
+            var fullCommand = command with { id = id };
+            await _mediator.Send(fullCommand);
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
-    [Authorize(Roles = "EMPLOYER")]
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        await _mediator.Send(new DeleteJobOfferCommand(id));
-        return NoContent();
+        try
+        {
+            await _mediator.Send(new DeleteJobOfferCommand(id));
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 }

@@ -7,4 +7,5 @@ public class ApplicationSummaryDto
     public string cv_url { get; set; }
     public DateTime application_date { get; set; }
     public string job_offer_id { get; set; }
+    public string status { get; set; }
 }

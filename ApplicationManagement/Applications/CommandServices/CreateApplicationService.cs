@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Jobsy.ApplicationManagement.Domain.Model.Aggregates;
 using Jobsy.ApplicationManagement.Domain.Model.Commands;
@@ -21,8 +22,8 @@ public class CreateApplicationService : IRequestHandler<CreateApplicationCommand
     {
         var user = _httpContextAccessor.HttpContext?.User;
 
-        var candidateIdClaim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+        var candidateIdClaim = user?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var role = user?.FindFirst("role")?.Value;
 
         if (role != "CANDIDATE")
             throw new UnauthorizedAccessException("Solo los candidatos pueden postular.");

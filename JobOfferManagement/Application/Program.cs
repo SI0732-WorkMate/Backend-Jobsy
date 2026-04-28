@@ -8,6 +8,8 @@ using Jobsy.UserAuthentication.Application.CommandServices;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.OpenApi.Models;
 
@@ -67,6 +69,9 @@ builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
         var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+        // Desactivar el remapeo automático de claims (de URI largo a clave corta).
+        // Así los claims del token llegan tal cual al ClaimsPrincipal.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -75,7 +80,11 @@ builder.Services.AddAuthentication("Bearer")
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            // El token guarda el rol en la clave corta "role"
+            RoleClaimType = "role",
+            // El token guarda el ID de usuario en "sub"
+            NameClaimType = JwtRegisteredClaimNames.Sub
         };
     });
 
@@ -87,7 +96,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:5174") // Vue dev server
+            policy.WithOrigins("http://localhost:5173", "http://localhost:5174") // Vue dev server
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
@@ -108,12 +117,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 var app = builder.Build();
-app.UseCors("AllowAll");
 
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AppDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     context.Database.EnsureCreated();
 }
 
@@ -122,12 +129,20 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.MapControllers();
-app.UseCors(MyAllowSpecificOrigins);
-app.UseAuthentication();  
-app.UseAuthorization(); 
 
 app.UseHttpsRedirection();
+
+//  antes de auth y controllers
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.UseHttpsRedirection();
+
+app.Run();
 
 var summaries = new[]
 {
@@ -148,9 +163,8 @@ app.MapGet("/weatherforecast", () =>
     })
     .WithName("GetWeatherForecast");
 
-app.Run();
-
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+

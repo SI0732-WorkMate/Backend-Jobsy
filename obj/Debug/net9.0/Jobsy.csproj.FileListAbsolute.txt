@@ -299,3 +299,4 @@ C:\Users\villa\Desktop\JOBSY_BACKEND\jobsy\obj\Debug\net9.0\refint\Jobsy.dll
 C:\Users\villa\Desktop\JOBSY_BACKEND\jobsy\obj\Debug\net9.0\Jobsy.pdb
 C:\Users\villa\Desktop\JOBSY_BACKEND\jobsy\obj\Debug\net9.0\Jobsy.genruntimeconfig.cache
 C:\Users\villa\Desktop\JOBSY_BACKEND\jobsy\obj\Debug\net9.0\ref\Jobsy.dll
+C:\Users\villa\Desktop\JOBSY_BACKEND\Jobsy\obj\Debug\net9.0\Jobsy.sourcelink.json

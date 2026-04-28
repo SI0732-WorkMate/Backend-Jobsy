@@ -17,20 +17,35 @@ public class MessagesController : ControllerBase
         _mediator = mediator;
     }
 
-    [Authorize(Roles = "EMPLOYER")]
+    // La validación de rol EMPLOYER la hace EmployerSendMessageService internamente
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Send([FromBody] EmployerSendMessageCommand command)
     {
-        var id = await _mediator.Send(command);
-        return Ok(new { id });
+        try
+        {
+            var id = await _mediator.Send(command);
+            return Ok(new { id });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid();
+        }
     }
-    
-    [Authorize(Roles = "CANDIDATE")]
+
+    // La validación de rol CANDIDATE la hace GetMyMessagesService internamente
+    [Authorize]
     [HttpGet("inbox")]
     public async Task<IActionResult> GetInbox()
     {
-        var messages = await _mediator.Send(new GetMyMessagesQuery());
-        return Ok(messages);
+        try
+        {
+            var messages = await _mediator.Send(new GetMyMessagesQuery());
+            return Ok(messages);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid();
+        }
     }
-    
 }

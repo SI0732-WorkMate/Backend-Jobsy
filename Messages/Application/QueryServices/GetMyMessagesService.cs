@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using Jobsy.Messages.Domain.Model.Entities;
 using Jobsy.Messages.Domain.Model.Queries;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
@@ -21,10 +21,13 @@ public class GetMyMessagesService : IRequestHandler<GetMyMessagesQuery, IEnumera
     public async Task<IEnumerable<MessageDto>> Handle(GetMyMessagesQuery request, CancellationToken cancellationToken)
     {
         var user = _httpContextAccessor.HttpContext?.User;
-        var receiverId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+        var receiverId = user?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var role = user?.FindFirst("role")?.Value;
 
-        if (string.IsNullOrEmpty(receiverId) || role != "CANDIDATE")
+        // Aceptar tanto "CANDIDATE" como "0" por si el enum se serializa como número
+        bool isCandidate = role == "CANDIDATE" || role == "0";
+
+        if (string.IsNullOrEmpty(receiverId) || !isCandidate)
             throw new UnauthorizedAccessException("Solo candidatos pueden ver mensajes recibidos.");
 
         var messages = await _context.Messages

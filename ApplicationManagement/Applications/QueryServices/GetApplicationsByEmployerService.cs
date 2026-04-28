@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Jobsy.ApplicationManagement.Domain.Model.Entities;
 using Jobsy.ApplicationManagement.Domain.Model.Queries;
@@ -21,7 +22,7 @@ public class GetApplicationsByEmployerService : IRequestHandler<GetApplicationsB
     public async Task<IEnumerable<ApplicationSummaryDto>> Handle(GetApplicationsByEmployerQuery request, CancellationToken cancellationToken)
     {
         var user = _httpContextAccessor.HttpContext?.User;
-        var employerId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var employerId = user?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
         if (string.IsNullOrEmpty(employerId))
             throw new UnauthorizedAccessException("No se pudo identificar al employer.");
@@ -41,7 +42,8 @@ public class GetApplicationsByEmployerService : IRequestHandler<GetApplicationsB
                 candidate_id = a.candidate_id,
                 cv_url = a.cv_url,
                 application_date = a.application_date,
-                job_offer_id = a.job_offer_id
+                job_offer_id = a.job_offer_id,
+                status = a.status
             })
             .ToListAsync(cancellationToken);
 

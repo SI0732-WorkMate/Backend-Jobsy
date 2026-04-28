@@ -16,10 +16,10 @@ public class JobOffer
     [Required, StringLength(60)]
     public string title { get; set; }
 
-    [Required, StringLength(500)]
+    [Required]
     public string description { get; set; }
 
-    [Required, StringLength(300)]
+    [Required]
     public string requirements { get; set; }
 
     [Required, StringLength(100)]

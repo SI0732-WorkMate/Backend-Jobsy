@@ -23,9 +23,11 @@ public class JwtTokenGenerator
 
         var claims = new[]
         {
+            // Usar claves cortas estándar JWT ("sub", "email", "role")
+            // para que sean consistentes con MapInboundClaims = false
             new Claim(JwtRegisteredClaimNames.Sub, user.id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.email),
-            new Claim(ClaimTypes.Role, user.role.ToString())
+            new Claim("role", user.role.ToString())
         };
 
         var token = new JwtSecurityToken(
