@@ -97,11 +97,10 @@ builder.Services.AddMediatR(typeof(RegisterUserService).Assembly);
 builder.Services.AddScoped<RegisterUserService>();
 
 // --- CONEXIÓN A BASE DE DATOS ---
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION") ?? builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    // Usamos MySQL (asegúrate de que el paquete Pomelo.EntityFrameworkCore.MySql esté instalado)
-    options.UseMySQL(connectionString); 
+    options.UseMySQL(connectionString);
 });
 
 var app = builder.Build();
