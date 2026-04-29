@@ -121,18 +121,27 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         connectionString,
         new MySqlServerVersion(new Version(8, 0, 36)),
         mysqlOptions => mysqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(60),
             errorNumbersToAdd: null)
     );
 });
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Initialize database with retry logic
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.EnsureCreated();
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        context.Database.EnsureCreated();
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogWarning($"Database initialization failed: {ex.Message}. The application will continue.");
 }
 
 
