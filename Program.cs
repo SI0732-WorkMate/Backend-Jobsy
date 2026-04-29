@@ -141,7 +141,7 @@ app.UseSwaggerUI(c =>
 
 //app.UseHttpsRedirection();
 app.UseCors("ProductionPolicy");
-
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
