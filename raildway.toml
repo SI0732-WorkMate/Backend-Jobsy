@@ -1,0 +1,5 @@
+[build]
+buildCommand = "dotnet publish Jobsy.csproj -c Release -o out"
+
+[deploy]
+startCommand = "dotnet out/Jobsy.dll"
