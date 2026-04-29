@@ -94,17 +94,18 @@ builder.Services.AddAuthentication("Bearer")
 
 builder.Services.AddAuthorization();
 
-//---------------CORS------------
+// --- CONFIG CORS ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
+    options.AddPolicy("ProductionPolicy",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173", "https://tu-app.vercel.app") // Vue dev server
+            policy.WithOrigins("https://front-end-jobsy.vercel.app", "http://localhost:5173")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
 });
+
 //----------------
 
 
@@ -140,8 +141,7 @@ app.UseSwaggerUI(c =>
 
 //app.UseHttpsRedirection();
 app.UseCors("ProductionPolicy");
-//  antes de auth y controllers
-app.UseCors("AllowAll");
+
 
 app.UseAuthentication();
 app.UseAuthorization();

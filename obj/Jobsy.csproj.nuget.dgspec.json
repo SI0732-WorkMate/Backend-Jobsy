@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Jasmin\\Backend-Jobsy\\Jobsy.csproj": {}
+    "C:\\Users\\fabri\\OneDrive\\Desktop\\BACK-JOBSY\\Jobsy.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Jasmin\\Backend-Jobsy\\Jobsy.csproj": {
+    "C:\\Users\\fabri\\OneDrive\\Desktop\\BACK-JOBSY\\Jobsy.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Jasmin\\Backend-Jobsy\\Jobsy.csproj",
+        "projectUniqueName": "C:\\Users\\fabri\\OneDrive\\Desktop\\BACK-JOBSY\\Jobsy.csproj",
         "projectName": "Jobsy",
-        "projectPath": "C:\\Users\\Jasmin\\Backend-Jobsy\\Jobsy.csproj",
-        "packagesPath": "C:\\Users\\Jasmin\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Jasmin\\Backend-Jobsy\\obj\\",
+        "projectPath": "C:\\Users\\fabri\\OneDrive\\Desktop\\BACK-JOBSY\\Jobsy.csproj",
+        "packagesPath": "C:\\Users\\fabri\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\fabri\\OneDrive\\Desktop\\BACK-JOBSY\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Jasmin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\fabri\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -102,24 +102,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[9.0.15, 9.0.15]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[9.0.15, 9.0.15]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[9.0.15, 9.0.15]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[9.0.15, 9.0.15]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
