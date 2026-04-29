@@ -12,7 +12,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.OpenApi.Models;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,7 +122,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 36)),
         mysqlOptions => mysqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
-            maxRetryDelaySeconds: 30,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
             errorNumbersToAdd: null)
     );
 });
