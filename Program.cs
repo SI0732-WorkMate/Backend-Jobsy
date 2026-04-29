@@ -18,17 +18,6 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll",
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
-});
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -93,7 +82,6 @@ builder.Services.AddAuthentication("Bearer")
 
 builder.Services.AddAuthorization();
 
-// --- CONFIG CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ProductionPolicy",
@@ -104,8 +92,6 @@ builder.Services.AddCors(options =>
                 .AllowAnyMethod();
         });
 });
-
-//----------------
 
 
 //---
@@ -147,16 +133,17 @@ catch (Exception ex)
 
 // Configure the HTTP request pipeline.
 
+app.UseCors("ProductionPolicy");
+
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Jobsy API V1");
-    c.RoutePrefix = "swagger"; // Esto obliga a que la ruta sea /swagger
+    c.RoutePrefix = string.Empty; // Swagger en la raíz
+    c.InjectStylesheet("/swagger-ui.css");
 });
 
 //app.UseHttpsRedirection();
-app.UseCors("ProductionPolicy");
-app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
