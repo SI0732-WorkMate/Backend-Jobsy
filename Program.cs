@@ -114,11 +114,12 @@ builder.Services.AddMediatR(typeof(RegisterUserService).Assembly);
 builder.Services.AddScoped<RegisterUserService>();
 builder.Services.AddHttpContextAccessor();
 //----
-var connectionString = builder.Configuration.GetConnectionString("DB_CONNECTION");
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
+                       ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseMySQL(connectionString); // MYSQL
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
 var app = builder.Build();
