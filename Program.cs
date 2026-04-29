@@ -115,22 +115,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// Initialize database with retry logic
-try
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        context.Database.EnsureCreated();
-    }
-}
-catch (Exception ex)
-{
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogWarning($"Database initialization failed: {ex.Message}. The application will continue.");
-}
-
-
 // Configure the HTTP request pipeline.
 
 app.UseCors("ProductionPolicy");
@@ -140,13 +124,31 @@ app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Jobsy API V1");
     c.RoutePrefix = string.Empty; // Swagger en la raíz
-    c.InjectStylesheet("/swagger-ui.css");
 });
 
 //app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Initialize database in background (non-blocking)
+_ = Task.Run(async () =>
+{
+    try
+    {
+        await Task.Delay(2000); // Wait 2 seconds for container to stabilize
+        using (var scope = app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await context.Database.EnsureCreatedAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning($"Background database initialization failed: {ex.Message}");
+    }
+});
 
 app.MapControllers();
 
