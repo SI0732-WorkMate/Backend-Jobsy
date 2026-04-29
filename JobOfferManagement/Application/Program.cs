@@ -15,6 +15,10 @@ using Microsoft.OpenApi.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -128,7 +132,11 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Jobsy API V1");
+    c.RoutePrefix = "swagger"; // Esto obliga a que la ruta sea /swagger
+});
 
 //app.UseHttpsRedirection();
 app.UseCors("ProductionPolicy");
