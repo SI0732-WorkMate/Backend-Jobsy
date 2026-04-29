@@ -57,12 +57,14 @@ builder.Services.AddScoped<IDocumentAnalyzer, DocumentProcessingService>();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddHttpContextAccessor();
+
+var jwtSettingsConfig = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+if (jwtSettingsConfig == null)
+    throw new InvalidOperationException("JwtSettings no está configurado en appsettings.json");
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
-        var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-        // Desactivar el remapeo automático de claims (de URI largo a clave corta).
-        // Así los claims del token llegan tal cual al ClaimsPrincipal.
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -70,12 +72,10 @@ builder.Services.AddAuthentication("Bearer")
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-            // El token guarda el rol en la clave corta "role"
+            ValidIssuer = jwtSettingsConfig.Issuer,
+            ValidAudience = jwtSettingsConfig.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettingsConfig.Secret)),
             RoleClaimType = "role",
-            // El token guarda el ID de usuario en "sub"
             NameClaimType = JwtRegisteredClaimNames.Sub
         };
     });
@@ -136,17 +136,35 @@ _ = Task.Run(async () =>
 {
     try
     {
-        await Task.Delay(2000); // Wait 2 seconds for container to stabilize
-        using (var scope = app.Services.CreateScope())
+        await Task.Delay(5000); // Wait 5 seconds for container to stabilize
+        for (int i = 0; i < 30; i++)
         {
-            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            await context.Database.EnsureCreatedAsync();
+            try
+            {
+                using (var scope = app.Services.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    await context.Database.EnsureCreatedAsync();
+                }
+                break;
+            }
+            catch (Exception retryEx)
+            {
+                if (i < 29)
+                {
+                    await Task.Delay(2000);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
     }
     catch (Exception ex)
     {
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        logger.LogWarning($"Background database initialization failed: {ex.Message}");
+        logger.LogError($"Background database initialization failed: {ex.Message}");
     }
 });
 
