@@ -22,15 +22,15 @@ public class AppDbContext : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<User>()
-            .ToTable(tb => tb.HasTrigger("Trigger_Usuarios")); // el nombre puede ser ficticio
+        //modelBuilder.Entity<User>()
+           // .ToTable(tb => tb.HasTrigger("Trigger_Usuarios")); // el nombre puede ser ficticio
 
-        base.OnModelCreating(modelBuilder);
-        
-        modelBuilder.Entity<JobOffer>(Entity =>
-        {
-            Entity.ToTable("job_offers");
-        });
+           base.OnModelCreating(modelBuilder);
+    
+           modelBuilder.Entity<JobOffer>(Entity =>
+           {
+               Entity.ToTable("job_offers");
+           });
         
     }
     

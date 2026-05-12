@@ -15,7 +15,16 @@ public class UpdateUserService : IRequestHandler<UpdateUserCommand, Unit>
 
     public async Task<Unit> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        _context.Usuarios.Update(request.User);
+        var userInDb = await _context.Usuarios.FindAsync(new object[] { request.User.id }, cancellationToken);
+    
+        if (userInDb == null)
+            throw new KeyNotFoundException($"Usuario con ID {request.User.id} no encontrado.");
+
+        // Modificar propiedades directamente sobre la entidad trackeada
+        userInDb.name = request.User.name;
+        userInDb.email = request.User.email;
+        userInDb.description = request.User.description;
+
         await _context.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
