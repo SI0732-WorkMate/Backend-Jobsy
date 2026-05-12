@@ -8,7 +8,7 @@ RUN dotnet restore
 
 # Copiar el resto del código y compilar
 COPY . .
-RUN dotnet publish Jobsy.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish Jobsy.csproj -c Release -o /app/publish
 
 # ── ETAPA 2: Runtime ─────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
