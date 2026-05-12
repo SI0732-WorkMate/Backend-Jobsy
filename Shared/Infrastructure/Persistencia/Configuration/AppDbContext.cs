@@ -21,10 +21,6 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.email)
-            .IsUnique();
-
         modelBuilder.Entity<JobOffer>(entity =>
         {
             entity.ToTable("job_offers");
