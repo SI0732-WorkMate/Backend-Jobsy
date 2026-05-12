@@ -8,11 +8,12 @@ namespace Jobsy.JobsyAi.Infrastructure.ExternalServices;
 public class OpenrouterService : IChatService
 {
     private readonly HttpClient _httpClient;
-    private const string ApiKey = "pon-aqui-el-api-key";
+    private readonly string ApiKey;
 
     public OpenrouterService(HttpClient httpClient)
     {
         _httpClient = httpClient;
+        ApiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? "";
     }
 
     public async Task<string> SendMessageAsync(string prompt, string model = "openrouter/free")
