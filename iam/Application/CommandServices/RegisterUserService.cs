@@ -18,28 +18,34 @@ public class RegisterUserService : IRequestHandler<RegisterUserCommand, int>
 
     public async Task<int> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        // Validación si el correo ya existe
+        // Validación principal: verificar si el email ya existe
         var existingUser = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.email == request.email, cancellationToken);
 
         if (existingUser != null)
             throw new EmailAlreadyExistsException(request.email);
-        
-        // Crear nuevo usuario
+
         var nuevoUsuario = new User
         {
-            name = request.name,
-            email = request.email,
-            password = BCrypt.Net.BCrypt.HashPassword(request.password),  //se instalo un paquete para usar esto
-            role = request.role,
+            name        = request.name,
+            email       = request.email,
+            password    = BCrypt.Net.BCrypt.HashPassword(request.password),
+            role        = request.role,
             description = request.description,
-            created_at = DateTime.UtcNow
+            created_at  = DateTime.UtcNow
         };
 
         _context.Usuarios.Add(nuevoUsuario);
-        await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new EmailAlreadyExistsException(request.email);
+        }
 
         return nuevoUsuario.id;
     }
 }
-
