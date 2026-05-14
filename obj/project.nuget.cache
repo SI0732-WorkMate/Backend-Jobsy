@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "OV+P52chNYU=",
+  "dgSpecHash": "BaJGmiWEo0c=",
   "success": true,
-  "projectFilePath": "C:\\Users\\villa\\Desktop\\Backend-Jobsy\\Jobsy.csproj",
+  "projectFilePath": "C:\\Users\\villa\\Desktop\\Backend-Jobsy-Actualizado\\Jobsy.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\villa\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\villa\\.nuget\\packages\\bouncycastle.cryptography\\2.5.1\\bouncycastle.cryptography.2.5.1.nupkg.sha512",

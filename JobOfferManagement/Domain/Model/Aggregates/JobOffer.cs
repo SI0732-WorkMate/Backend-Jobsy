@@ -11,7 +11,7 @@ public class JobOffer
     public string id { get; set; } = Guid.NewGuid().ToString();
 
     [Required]
-    public int employer_id { get; set; }  // Cambio a int para coincidir con el User
+    public int employer_id { get; set; }
 
     [Required, StringLength(60)]
     public string title { get; set; }
@@ -32,4 +32,11 @@ public class JobOffer
 
     [Required]
     public Status status { get; set; } = Status.Activa;
+
+    // ── Eliminación lógica ───────────────────────────────────────────────────
+    // En vez de borrar el registro físicamente, se marca como eliminado.
+    // Esto preserva la trazabilidad de postulaciones y auditoría.
+    public bool is_deleted { get; set; } = false;
+
+    public DateTime? deleted_at { get; set; } = null;
 }

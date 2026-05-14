@@ -17,6 +17,9 @@ public class GetAllJobOffersService : IRequestHandler<GetAllJobOffersQuery, IEnu
 
     public async Task<IEnumerable<JobOffer>> Handle(GetAllJobOffersQuery request, CancellationToken cancellationToken)
     {
-        return await _context.JobOffers.ToListAsync(cancellationToken);
+        // Solo retorna ofertas NO eliminadas lógicamente
+        return await _context.JobOffers
+            .Where(j => !j.is_deleted)
+            .ToListAsync(cancellationToken);
     }
 }

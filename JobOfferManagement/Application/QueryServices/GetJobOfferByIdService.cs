@@ -17,8 +17,9 @@ public class GetJobOfferByIdService : IRequestHandler<GetJobOfferByIdQuery, JobO
 
     public async Task<JobOffer> Handle(GetJobOfferByIdQuery request, CancellationToken cancellationToken)
     {
+        // Solo retorna la oferta si NO fue eliminada lógicamente
         var jobOffer = await _context.JobOffers
-            .FirstOrDefaultAsync(j => j.id == request.id, cancellationToken);
+            .FirstOrDefaultAsync(j => j.id == request.id && !j.is_deleted, cancellationToken);
 
         return jobOffer ?? throw new KeyNotFoundException($"Oferta con ID {request.id} no encontrada.");
     }

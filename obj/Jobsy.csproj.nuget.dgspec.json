@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\villa\\Desktop\\Backend-Jobsy\\Jobsy.csproj": {}
+    "C:\\Users\\villa\\Desktop\\Backend-Jobsy-Actualizado\\Jobsy.csproj": {}
   },
   "projects": {
-    "C:\\Users\\villa\\Desktop\\Backend-Jobsy\\Jobsy.csproj": {
+    "C:\\Users\\villa\\Desktop\\Backend-Jobsy-Actualizado\\Jobsy.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\villa\\Desktop\\Backend-Jobsy\\Jobsy.csproj",
+        "projectUniqueName": "C:\\Users\\villa\\Desktop\\Backend-Jobsy-Actualizado\\Jobsy.csproj",
         "projectName": "Jobsy",
-        "projectPath": "C:\\Users\\villa\\Desktop\\Backend-Jobsy\\Jobsy.csproj",
+        "projectPath": "C:\\Users\\villa\\Desktop\\Backend-Jobsy-Actualizado\\Jobsy.csproj",
         "packagesPath": "C:\\Users\\villa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\villa\\Desktop\\Backend-Jobsy\\obj\\",
+        "outputPath": "C:\\Users\\villa\\Desktop\\Backend-Jobsy-Actualizado\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\villa\\AppData\\Roaming\\NuGet\\NuGet.Config",
