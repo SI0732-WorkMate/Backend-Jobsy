@@ -20,4 +20,8 @@ public class Application
 
     [Required]
     public string status { get; set; } = "pending";
+    
+    // US017 - motivo opcional registrado al descartar al candidato
+    [MaxLength(300)]
+    public string? discard_reason { get; set; } = null;
 }

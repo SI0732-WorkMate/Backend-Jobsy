@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Jobsy.ApplicationManagement.Domain.Model.Commands;
 using Jobsy.ApplicationManagement.Domain.Model.Queries;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
+using Jobsy.Messages.Domain.Model.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -123,16 +124,40 @@ public class ApplicationController : ControllerBase
         if (application == null)
             return NotFound(new { error = "Postulación no encontrada" });
 
-        // Verificar que la oferta pertenece al empleador autenticado
         var employerId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
         var offer = await _context.JobOffers.FindAsync(application.job_offer_id);
         if (offer == null || offer.employer_id.ToString() != employerId)
             return Forbid();
 
         application.status = request.Status;
-        await _context.SaveChangesAsync();
 
-        return Ok(new { application_id = id, status = application.status });
+        // US017 - Enviar retroalimentación al descartar candidato
+        if (request.Status == "rejected")
+        {
+            application.discard_reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+            await _context.SaveChangesAsync();
+
+            var contenidoNotificacion = string.IsNullOrWhiteSpace(application.discard_reason)
+                ? $"Tu postulación a \"{offer.title}\" fue descartada."
+                : $"Tu postulación a \"{offer.title}\" fue descartada. Motivo: {application.discard_reason}";
+
+            try
+            {
+                // Reutiliza el mecanismo de mensajería existente para notificar al postulante
+                await _mediator.Send(new EmployerSendMessageCommand(application.candidate_id, contenidoNotificacion));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // No bloquea el cambio de estado si la notificación falla
+            }
+        }
+        else
+        {
+            application.discard_reason = null;
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok(new { application_id = id, status = application.status, discard_reason = application.discard_reason });
     }
 
     [Authorize(Roles = "EMPLOYER")]
@@ -182,4 +207,5 @@ public class ApplicationController : ControllerBase
 public class UpdateApplicationStatusRequest
 {
     public string Status { get; set; }
+    public string? Reason { get; set; }
 }
