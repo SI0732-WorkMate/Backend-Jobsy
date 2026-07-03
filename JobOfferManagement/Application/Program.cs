@@ -105,6 +105,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySQL(connectionString!);
 });
 
+// Para Interviews
+builder.Services.AddHostedService<Jobsy.InterviewManagement.Application.Services.InterviewReminderService>();
+
 // ── Build ─────────────────────────────────────────────────────────────
 var app = builder.Build();
 

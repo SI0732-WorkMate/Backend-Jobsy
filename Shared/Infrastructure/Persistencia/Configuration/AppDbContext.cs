@@ -1,4 +1,5 @@
 using Jobsy.ApplicationManagement.Domain.Model.Aggregates;
+using Jobsy.InterviewManagement.Domain.Model.Aggregates;
 using Jobsy.Messages.Domain.Model.Aggregates;
 using Jobsy.Recruiter.JobOfferManagement.Domain.Model.Aggregates;
 using Jobsy.UserAuthentication.Domain.Model.Aggregates;
@@ -16,6 +17,8 @@ public class AppDbContext : DbContext
     public DbSet<JobOffer> JobOffers { get; set; }
     public DbSet<Application> Applications { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Interview> Interviews { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
