@@ -164,6 +164,66 @@ public class InterviewController : ControllerBase
 
         return Ok(new { interview_id = id, status = interview.status });
     }
+
+    [Authorize(Roles = "EMPLOYER")]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> RescheduleInterview(string id, [FromBody] RescheduleInterviewRequest request)
+    {
+        var employerIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (string.IsNullOrEmpty(employerIdClaim)) return Unauthorized();
+
+        var employerId = int.Parse(employerIdClaim);
+        var interview = await _context.Interviews.FindAsync(id);
+        if (interview == null) return NotFound(new { error = "Entrevista no encontrada" });
+
+        if (interview.employer_id != employerId) return Forbid();
+        if (interview.status != "scheduled") return BadRequest(new { error = "Solo puedes editar entrevistas programadas." });
+
+        var duracion = request.duration_minutes <= 0 ? 30 : request.duration_minutes;
+        var nuevoInicio = request.scheduled_at;
+        var nuevoFin = nuevoInicio.AddMinutes(duracion);
+
+        var otras = await _context.Interviews
+            .Where(i => i.employer_id == employerId && i.status == "scheduled" && i.id != id)
+            .ToListAsync();
+
+        var haySolape = otras.Any(i =>
+        {
+            var inicioExistente = i.scheduled_at;
+            var finExistente = i.scheduled_at.AddMinutes(i.duration_minutes);
+            return nuevoInicio < finExistente && inicioExistente < nuevoFin;
+        });
+
+        if (haySolape) return BadRequest(new { error = "Ya tienes una entrevista programada en ese horario." });
+
+        interview.scheduled_at = nuevoInicio;
+        interview.duration_minutes = duracion;
+        interview.notes = request.notes;
+        interview.reminder_sent = false; // si se reprograma, se vuelve a habilitar el recordatorio
+
+        await _context.SaveChangesAsync();
+
+        try
+        {
+            var application = await _context.Applications.FindAsync(interview.application_id);
+            var offer = application != null ? await _context.JobOffers.FindAsync(application.job_offer_id) : null;
+            var contenido = $"Tu entrevista para \"{offer?.title ?? "la oferta"}\" fue reprogramada al {interview.scheduled_at:dd/MM/yyyy} a las {interview.scheduled_at:HH:mm}.";
+
+            _context.Messages.Add(new Jobsy.Messages.Domain.Model.Aggregates.Message
+            {
+                sender_id = employerId,
+                receiver_id = interview.candidate_id,
+                content = contenido
+            });
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            // No bloquea la edición si falla la notificación
+        }
+
+        return Ok(new { interview_id = id, scheduled_at = interview.scheduled_at, duration_minutes = interview.duration_minutes, notes = interview.notes });
+    }
 }
 
 public class ScheduleInterviewRequest
@@ -177,4 +237,11 @@ public class ScheduleInterviewRequest
 public class UpdateInterviewStatusRequest
 {
     public string Status { get; set; }
+}
+
+public class RescheduleInterviewRequest
+{
+    public DateTime scheduled_at { get; set; }
+    public int duration_minutes { get; set; } = 30;
+    public string? notes { get; set; }
 }
