@@ -4,6 +4,7 @@ using Jobsy.ApplicationManagement.Domain.Model.Commands;
 using Jobsy.ApplicationManagement.Domain.Model.Queries;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
 using Jobsy.Messages.Domain.Model.Commands;
+using Jobsy.Messages.Domain.Model.Aggregates;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -119,32 +120,50 @@ public class ApplicationController : ControllerBase
         var validStatuses = new[] { "pending", "accepted", "rejected" };
         if (string.IsNullOrEmpty(request.Status) || !validStatuses.Contains(request.Status))
             return BadRequest(new { error = "Estado inválido. Use: pending, accepted, rejected" });
-
+    
         var application = await _context.Applications.FindAsync(id);
         if (application == null)
             return NotFound(new { error = "Postulación no encontrada" });
-
+    
         var employerId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
         var offer = await _context.JobOffers.FindAsync(application.job_offer_id);
         if (offer == null || offer.employer_id.ToString() != employerId)
             return Forbid();
-
+    
         application.status = request.Status;
-
+    
         // US017 - Enviar retroalimentación al descartar candidato
         if (request.Status == "rejected")
         {
             application.discard_reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
             await _context.SaveChangesAsync();
-
+    
             var contenidoNotificacion = string.IsNullOrWhiteSpace(application.discard_reason)
                 ? $"Tu postulación a \"{offer.title}\" fue descartada."
                 : $"Tu postulación a \"{offer.title}\" fue descartada. Motivo: {application.discard_reason}";
-
+    
             try
             {
-                // Reutiliza el mecanismo de mensajería existente para notificar al postulante
-                await _mediator.Send(new EmployerSendMessageCommand(application.candidate_id, contenidoNotificacion));
+                // Si ya existe un mensaje de descarte previo para esta postulación, lo editamos
+                // en vez de crear uno nuevo (evita duplicados al mover el candidato de estado varias veces)
+                Message? mensajeExistente = null;
+                if (!string.IsNullOrEmpty(application.discard_message_id))
+                {
+                    mensajeExistente = await _context.Messages.FindAsync(application.discard_message_id);
+                }
+    
+                if (mensajeExistente != null)
+                {
+                    mensajeExistente.content = contenidoNotificacion;
+                    mensajeExistente.sent_at = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    var nuevoMensajeId = await _mediator.Send(new EmployerSendMessageCommand(application.candidate_id, contenidoNotificacion));
+                    application.discard_message_id = nuevoMensajeId;
+                    await _context.SaveChangesAsync();
+                }
             }
             catch (UnauthorizedAccessException)
             {
@@ -155,8 +174,10 @@ public class ApplicationController : ControllerBase
         {
             application.discard_reason = null;
             await _context.SaveChangesAsync();
+            // Nota: discard_message_id se conserva a propósito, para reutilizar/editar
+            // el mismo mensaje si el candidato vuelve a ser descartado más adelante.
         }
-
+    
         return Ok(new { application_id = id, status = application.status, discard_reason = application.discard_reason });
     }
 
