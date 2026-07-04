@@ -1,4 +1,5 @@
 using Jobsy.ApplicationManagement.Domain.Model.Aggregates;
+using Jobsy.EvaluationManagement.Domain.Model.Aggregates;
 using Jobsy.InterviewManagement.Domain.Model.Aggregates;
 using Jobsy.Messages.Domain.Model.Aggregates;
 using Jobsy.Recruiter.JobOfferManagement.Domain.Model.Aggregates;
@@ -9,24 +10,18 @@ namespace Jobsy.Shared.Infrastructure.Persistencia.Configuration;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-    }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Usuarios { get; set; }
     public DbSet<JobOffer> JobOffers { get; set; }
     public DbSet<Application> Applications { get; set; }
     public DbSet<Message> Messages { get; set; }
     public DbSet<Interview> Interviews { get; set; }
-
+    public DbSet<SoftSkillEvaluation> SoftSkillEvaluations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
-        modelBuilder.Entity<JobOffer>(entity =>
-        {
-            entity.ToTable("job_offers");
-        });
+        modelBuilder.Entity<JobOffer>(entity => { entity.ToTable("job_offers"); });
     }
 }
