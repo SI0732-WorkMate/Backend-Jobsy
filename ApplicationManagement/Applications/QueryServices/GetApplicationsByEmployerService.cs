@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Jobsy.ApplicationManagement.Domain.Model.Entities;
 using Jobsy.ApplicationManagement.Domain.Model.Queries;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
@@ -12,13 +11,13 @@ public class GetApplicationsByEmployerService : IRequestHandler<GetApplicationsB
 {
     private readonly AppDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
+
     public GetApplicationsByEmployerService(AppDbContext context, IHttpContextAccessor accessor)
     {
         _context = context;
         _httpContextAccessor = accessor;
     }
-    
+
     public async Task<IEnumerable<ApplicationSummaryDto>> Handle(GetApplicationsByEmployerQuery request, CancellationToken cancellationToken)
     {
         var user = _httpContextAccessor.HttpContext?.User;
@@ -27,30 +26,31 @@ public class GetApplicationsByEmployerService : IRequestHandler<GetApplicationsB
         if (string.IsNullOrEmpty(employerId))
             throw new UnauthorizedAccessException("No se pudo identificar al employer.");
 
-        // Buscar ofertas del employer
         var offersIds = await _context.JobOffers
             .Where(o => o.employer_id == int.Parse(employerId))
             .Select(o => o.id)
             .ToListAsync(cancellationToken);
 
-        // Buscar postulaciones solo de esas ofertas, join con Usuarios para traer el nombre
         var applications = await _context.Applications
             .Where(a => offersIds.Contains(a.job_offer_id))
             .Join(_context.Usuarios,
                 app => app.candidate_id,
-                user => user.id,
-                (app, user) => new ApplicationSummaryDto
+                usr => usr.id,
+                (app, usr) => new ApplicationSummaryDto
                 {
                     application_id = app.id,
                     candidate_id = app.candidate_id,
-                    candidate_name = user.name,
+                    candidate_name = usr.name,
                     cv_url = app.cv_url,
                     application_date = app.application_date,
                     job_offer_id = app.job_offer_id,
-                    status = app.status
+                    status = app.status,
+                    match_score = app.match_score,
+                    has_cv_pdf = app.cv_pdf_base64 != null
                 })
             .ToListAsync(cancellationToken);
 
-        return applications;
+        // US016 - Ordenar por Match Score de mayor a menor (los sin calcular quedan al final)
+        return applications.OrderByDescending(a => a.match_score).ToList();
     }
 }

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Jobsy.ApplicationManagement.Domain.Model.Commands;
 using Jobsy.ApplicationManagement.Domain.Model.Queries;
+using Jobsy.ApplicationManagement.Applications.CommandServices;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
 using Jobsy.Messages.Domain.Model.Commands;
 using Jobsy.Messages.Domain.Model.Aggregates;
@@ -27,9 +28,38 @@ public class ApplicationController : ControllerBase
 
     [Authorize(Roles = "CANDIDATE")]
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateApplicationCommand command)
+    public async Task<IActionResult> Create([FromForm] string job_offer_id, [FromForm] string cv_url, IFormFile? cv_pdf)
     {
-        var id = await _mediator.Send(command);
+        string? cvBase64 = null;
+
+        if (cv_pdf != null && cv_pdf.Length > 0)
+        {
+            if (cv_pdf.Length > 5 * 1024 * 1024)
+                return BadRequest(new { error = "El PDF no puede superar 5 MB." });
+
+            if (!cv_pdf.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { error = "Solo se aceptan archivos PDF." });
+
+            using var ms = new MemoryStream();
+            await cv_pdf.CopyToAsync(ms);
+            cvBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+
+        var id = await _mediator.Send(new CreateApplicationCommand(job_offer_id, cv_url, cvBase64));
+
+        // US016 - Si se subió el PDF, intenta calcular el Match Score automáticamente.
+        if (cvBase64 != null)
+        {
+            try
+            {
+                await _mediator.Send(new CalculateMatchScoreCommand(id));
+            }
+            catch
+            {
+                // Silencioso a propósito
+            }
+        }
+
         return Ok(new { id });
     }
 
@@ -39,7 +69,6 @@ public class ApplicationController : ControllerBase
     {
         var candidateId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         
-        // LOG: devuelve info de diagnóstico si algo falla
         if (string.IsNullOrEmpty(candidateId))
         {
             var allClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
@@ -78,8 +107,6 @@ public class ApplicationController : ControllerBase
         return Ok(result);
     }
 
-    // ENDPOINT DE DIAGNÓSTICO: GET /api/applications/debug
-    // Úsalo desde el navegador estando logueado para ver qué claims tiene tu token
     [Authorize]
     [HttpGet("debug")]
     public async Task<IActionResult> Debug()
@@ -132,7 +159,6 @@ public class ApplicationController : ControllerBase
     
         application.status = request.Status;
     
-        // US017 - Enviar retroalimentación al descartar candidato
         if (request.Status == "rejected")
         {
             application.discard_reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
@@ -144,8 +170,6 @@ public class ApplicationController : ControllerBase
     
             try
             {
-                // Si ya existe un mensaje de descarte previo para esta postulación, lo editamos
-                // en vez de crear uno nuevo (evita duplicados al mover el candidato de estado varias veces)
                 Message? mensajeExistente = null;
                 if (!string.IsNullOrEmpty(application.discard_message_id))
                 {
@@ -174,12 +198,77 @@ public class ApplicationController : ControllerBase
         {
             application.discard_reason = null;
             await _context.SaveChangesAsync();
-            // Nota: discard_message_id se conserva a propósito, para reutilizar/editar
-            // el mismo mensaje si el candidato vuelve a ser descartado más adelante.
         }
     
         return Ok(new { application_id = id, status = application.status, discard_reason = application.discard_reason });
     }
+
+    // =======================================================
+    // NUEVOS ENDPOINTS INSERTADOS AQUÍ (MÓDULO DE RECLUTADOR)
+    // =======================================================
+
+    // US016 - Calcula (o recalcula) el Match Score.
+    [Authorize(Roles = "EMPLOYER")]
+    [HttpPost("{id}/calculate-match")]
+    public async Task<IActionResult> CalculateMatch(string id, IFormFile? cv_pdf)
+    {
+        var application = await _context.Applications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { error = "Postulación no encontrada" });
+
+        var employerId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var offer = await _context.JobOffers.FindAsync(application.job_offer_id);
+        if (offer == null || offer.employer_id.ToString() != employerId)
+            return Forbid();
+
+        if (cv_pdf != null && cv_pdf.Length > 0)
+        {
+            if (cv_pdf.Length > 5 * 1024 * 1024)
+                return BadRequest(new { error = "El PDF no puede superar 5 MB." });
+
+            if (!cv_pdf.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { error = "Solo se aceptan archivos PDF." });
+
+            using var ms = new MemoryStream();
+            await cv_pdf.CopyToAsync(ms);
+            // Asegúrate de que la entidad Application tenga la propiedad cv_pdf_base64
+            application.cv_pdf_base64 = Convert.ToBase64String(ms.ToArray());
+            await _context.SaveChangesAsync();
+        }
+
+        if (string.IsNullOrEmpty(application.cv_pdf_base64))
+            return BadRequest(new { error = "No hay un PDF asociado a esta postulación. Sube uno para calcular el Match Score." });
+
+        // Corrección aquí: se captura el resultado booleano devuelto por el comando
+        bool ok = await _mediator.Send(new CalculateMatchScoreCommand(id));
+        if (!ok)
+            return StatusCode(500, new { error = "No se pudo calcular el Match Score. Intenta de nuevo." });
+
+        await _context.Entry(application).ReloadAsync();
+        return Ok(new { application_id = id, match_score = application.match_score });
+    }
+
+    // US016 - Detalle del match: qué habilidades/requisitos coincidieron y cuáles faltan.
+    [Authorize(Roles = "EMPLOYER")]
+    [HttpGet("{id}/match-detail")]
+    public async Task<IActionResult> GetMatchDetail(string id)
+    {
+        var application = await _context.Applications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { error = "Postulación no encontrada" });
+
+        var employerId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var offer = await _context.JobOffers.FindAsync(application.job_offer_id);
+        if (offer == null || offer.employer_id.ToString() != employerId)
+            return Forbid();
+
+        if (string.IsNullOrEmpty(application.match_details))
+            return NotFound(new { error = "Aún no se ha calculado el Match Score de este candidato." });
+
+        return Content(application.match_details, "application/json");
+    }
+
+    // =======================================================
 
     [Authorize(Roles = "EMPLOYER")]
     [HttpGet("my-offers")]

@@ -28,4 +28,9 @@ public class Application
     // US017/US018 - referencia al mensaje de notificación de descarte,
     // para editarlo en vez de duplicarlo si se descarta más de una vez
     public string? discard_message_id { get; set; } = null;
+    
+    // US016 - Match Score por IA
+    public string? cv_pdf_base64 { get; set; } = null;
+    public int? match_score { get; set; } = null;
+    public string? match_details { get; set; } = null; // JSON: { score, matched_skills, missing_skills, summary }
 }

@@ -21,7 +21,6 @@ public class CreateApplicationService : IRequestHandler<CreateApplicationCommand
     public async Task<string> Handle(CreateApplicationCommand request, CancellationToken cancellationToken)
     {
         var user = _httpContextAccessor.HttpContext?.User;
-
         var candidateIdClaim = user?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         var role = user?.FindFirst("role")?.Value;
 
@@ -32,7 +31,8 @@ public class CreateApplicationService : IRequestHandler<CreateApplicationCommand
         {
             job_offer_id = request.job_offer_id,
             candidate_id = int.Parse(candidateIdClaim),
-            cv_url = request.cv_url
+            cv_url = request.cv_url,
+            cv_pdf_base64 = request.cv_pdf_base64
         };
 
         _context.Applications.Add(application);
