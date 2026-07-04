@@ -23,30 +23,48 @@ public class CalculateMatchScoreService : IRequestHandler<CalculateMatchScoreCom
     {
         var application = await _context.Applications.FindAsync(new object[] { request.application_id }, cancellationToken);
         if (application == null || string.IsNullOrEmpty(application.cv_pdf_base64))
+        {
+            Console.WriteLine("[MatchScore] FALLA: no hay application o no tiene cv_pdf_base64.");
             return false;
+        }
 
         var offer = await _context.JobOffers.FindAsync(new object[] { application.job_offer_id }, cancellationToken);
         if (offer == null)
+        {
+            Console.WriteLine("[MatchScore] FALLA: no se encontró la oferta.");
             return false;
+        }
 
         byte[] pdfBytes;
         try
         {
             pdfBytes = Convert.FromBase64String(application.cv_pdf_base64);
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[MatchScore] FALLA al decodificar base64: {ex.Message}");
             return false;
         }
 
         string textoPdf;
-        using (var ms = new MemoryStream(pdfBytes))
+        try
         {
+            using var ms = new MemoryStream(pdfBytes);
             textoPdf = _documentAnalyzer.ExtractTextFromPdf(ms);
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MatchScore] FALLA al extraer texto del PDF: {ex.Message}");
+            return false;
+        }
+
+        Console.WriteLine($"[MatchScore] Caracteres extraídos del PDF: {textoPdf?.Length ?? 0}");
 
         if (string.IsNullOrWhiteSpace(textoPdf))
+        {
+            Console.WriteLine("[MatchScore] FALLA: el texto extraído del PDF está vacío (¿PDF escaneado/imagen?).");
             return false;
+        }
 
         var prompt = $@"Eres un sistema que compara un CV contra los requisitos de una vacante y devuelve ÚNICAMENTE un JSON válido, sin texto adicional, sin markdown, sin explicaciones.
 
@@ -70,13 +88,16 @@ CV DEL CANDIDATO (texto extraído):
         try
         {
             respuestaIA = await _chatService.SendMessageAsync(prompt);
+            Console.WriteLine($"[MatchScore] Respuesta cruda de la IA: {respuestaIA}");
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[MatchScore] FALLA al llamar a la IA: {ex.Message}");
             return false;
         }
 
         var jsonLimpio = LimpiarJson(respuestaIA);
+        Console.WriteLine($"[MatchScore] JSON limpio: {jsonLimpio}");
 
         try
         {
@@ -89,8 +110,9 @@ CV DEL CANDIDATO (texto extraído):
             await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[MatchScore] FALLA al parsear el JSON de la IA: {ex.Message}");
             return false;
         }
     }
