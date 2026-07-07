@@ -1,5 +1,6 @@
 using Jobsy.Recruiter.JobOfferManagement.Domain.Model.Aggregates;
 using Jobsy.Recruiter.JobOfferManagement.Domain.Model.Commands;
+using Jobsy.Recruiter.JobOfferManagement.Domain.Model.ValueObjects;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,9 @@ public class UpdateJobOfferService : IRequestHandler<UpdateJobOfferCommand, Unit
 
         if (jobOffer == null)
             throw new KeyNotFoundException($"Oferta con ID {request.id} no encontrada.");
+
+        if (jobOffer.status == Status.Cerrada)
+            throw new InvalidOperationException("No se puede editar una vacante cerrada.");
 
         // Actualizar campos
         jobOffer.title = request.title;

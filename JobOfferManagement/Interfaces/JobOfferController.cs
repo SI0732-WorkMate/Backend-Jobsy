@@ -30,6 +30,10 @@ public class JobOfferController : ControllerBase
         {
             return Forbid();
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 
     [AllowAnonymous]

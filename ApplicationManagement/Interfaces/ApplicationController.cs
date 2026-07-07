@@ -45,7 +45,19 @@ public class ApplicationController : ControllerBase
             cvBase64 = Convert.ToBase64String(ms.ToArray());
         }
 
-        var id = await _mediator.Send(new CreateApplicationCommand(job_offer_id, cv_url, cvBase64));
+        string id;
+        try
+        {
+            id = await _mediator.Send(new CreateApplicationCommand(job_offer_id, cv_url, cvBase64));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
 
         // US016 - Si se subió el PDF, intenta calcular el Match Score automáticamente.
         if (cvBase64 != null)

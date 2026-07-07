@@ -23,6 +23,18 @@ public class User
     
     [StringLength(50, ErrorMessage = "maximo 50 caracteres")]
     public string description  { get; set; }
+
+    [StringLength(11, MinimumLength = 11, ErrorMessage = "El RUC debe tener 11 digitos")]
+    public string? ruc { get; set; }
+
+    public string? cv_url { get; set; }
+
+    public string? cv_pdf_base64 { get; set; }
+
+    public bool vacancy_notifications_enabled { get; set; } = false;
+
+    [StringLength(300)]
+    public string? vacancy_notification_keywords { get; set; }
     
     public DateTime created_at { get; set; } = DateTime.UtcNow;
     

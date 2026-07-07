@@ -22,15 +22,11 @@ public class GetMyMessagesService : IRequestHandler<GetMyMessagesQuery, IEnumera
     {
         var user = _httpContextAccessor.HttpContext?.User;
         var receiverId = user?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        var role = user?.FindFirst("role")?.Value;
 
-        // Aceptar tanto "CANDIDATE" como "0" por si el enum se serializa como número
-        bool isCandidate = role == "CANDIDATE" || role == "0";
+        if (string.IsNullOrEmpty(receiverId))
+            throw new UnauthorizedAccessException("Usuario no autenticado.");
 
-        if (string.IsNullOrEmpty(receiverId) || !isCandidate)
-            throw new UnauthorizedAccessException("Solo candidatos pueden ver mensajes recibidos.");
-
-        var messages = await _context.Messages
+        return await _context.Messages
             .Where(m => m.receiver_id == int.Parse(receiverId))
             .OrderByDescending(m => m.sent_at)
             .Select(m => new MessageDto
@@ -41,7 +37,5 @@ public class GetMyMessagesService : IRequestHandler<GetMyMessagesQuery, IEnumera
                 sent_at = m.sent_at
             })
             .ToListAsync(cancellationToken);
-
-        return messages;
     }
 }

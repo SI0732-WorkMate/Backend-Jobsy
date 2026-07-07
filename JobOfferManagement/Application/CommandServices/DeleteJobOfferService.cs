@@ -1,4 +1,5 @@
 using Jobsy.Recruiter.JobOfferManagement.Domain.Model.Commands;
+using Jobsy.Recruiter.JobOfferManagement.Domain.Model.ValueObjects;
 using Jobsy.Shared.Infrastructure.Persistencia.Configuration;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -22,10 +23,9 @@ public class DeleteJobOfferService : IRequestHandler<DeleteJobOfferCommand, Unit
         if (jobOffer == null)
             throw new KeyNotFoundException($"Oferta con ID {request.id} no encontrada.");
 
-        // ── Eliminación LÓGICA ───────────────────────────────────────────────
-        // NO se borra el registro de la BD — solo se marca como eliminado.
-        // Esto preserva la trazabilidad de postulaciones y estadísticas.
-        jobOffer.is_deleted = true;
+        // Cerrar la vacante conserva su historial y detiene nuevas postulaciones.
+        jobOffer.status = Status.Cerrada;
+        jobOffer.is_deleted = false;
         jobOffer.deleted_at = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);

@@ -74,6 +74,12 @@ public class UserController : ControllerBase
             user.email,
             user.role,
             user.description,
+            user.ruc,
+            user.cv_url,
+            user.cv_pdf_base64,
+            has_cv_pdf = !string.IsNullOrEmpty(user.cv_pdf_base64),
+            user.vacancy_notifications_enabled,
+            user.vacancy_notification_keywords,
             user.created_at
         });
     }
@@ -105,7 +111,7 @@ public class UserController : ControllerBase
             return NotFound(new { mensaje = ex.Message });
         }
     }
-    
+
     [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
@@ -128,6 +134,22 @@ public class UserController : ControllerBase
             
             if (!string.IsNullOrWhiteSpace(request.email))
                 user.email = request.email;
+
+            if (request.ruc != null)
+                user.ruc = request.ruc;
+
+            if (request.cv_url != null)
+                user.cv_url = request.cv_url;
+
+            if (request.cv_pdf_base64 != null)
+                user.cv_pdf_base64 = request.cv_pdf_base64;
+
+            if (request.vacancy_notifications_enabled.HasValue)
+                user.vacancy_notifications_enabled = request.vacancy_notifications_enabled.Value;
+
+            if (request.vacancy_notification_keywords != null)
+                user.vacancy_notification_keywords = request.vacancy_notification_keywords;
+
             await _mediator.Send(new UpdateUserCommand(user));
 
             return Ok(new
@@ -137,12 +159,22 @@ public class UserController : ControllerBase
                 user.email,
                 user.role,
                 user.description,
+                user.ruc,
+                user.cv_url,
+                user.cv_pdf_base64,
+                has_cv_pdf = !string.IsNullOrEmpty(user.cv_pdf_base64),
+                user.vacancy_notifications_enabled,
+                user.vacancy_notification_keywords,
                 user.created_at
             });
         }
         catch (KeyNotFoundException ex)
         {
             return NotFound(new { mensaje = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
         }
     }
     
@@ -153,4 +185,9 @@ public class UpdateUserRequest
     public string name { get; set; }
     public string description { get; set; }
     public string email { get; set; } //
+    public string? ruc { get; set; }
+    public string? cv_url { get; set; }
+    public string? cv_pdf_base64 { get; set; }
+    public bool? vacancy_notifications_enabled { get; set; }
+    public string? vacancy_notification_keywords { get; set; }
 }
