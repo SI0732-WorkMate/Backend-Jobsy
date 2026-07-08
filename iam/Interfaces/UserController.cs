@@ -141,7 +141,7 @@ public class UserController : ControllerBase
             if (request.cv_url != null)
                 user.cv_url = request.cv_url;
 
-            if (request.cv_pdf_base64 != null)
+            if (!string.IsNullOrWhiteSpace(request.cv_pdf_base64))
                 user.cv_pdf_base64 = request.cv_pdf_base64;
 
             if (request.vacancy_notifications_enabled.HasValue)

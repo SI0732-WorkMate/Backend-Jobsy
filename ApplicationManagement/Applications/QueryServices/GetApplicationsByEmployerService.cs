@@ -41,12 +41,12 @@ public class GetApplicationsByEmployerService : IRequestHandler<GetApplicationsB
                     application_id = app.id,
                     candidate_id = app.candidate_id,
                     candidate_name = usr.name,
-                    cv_url = app.cv_url,
+                    cv_url = !string.IsNullOrWhiteSpace(app.cv_url) ? app.cv_url : usr.cv_url,
                     application_date = app.application_date,
                     job_offer_id = app.job_offer_id,
                     status = app.status,
                     match_score = app.match_score,
-                    has_cv_pdf = app.cv_pdf_base64 != null
+                    has_cv_pdf = !string.IsNullOrEmpty(app.cv_pdf_base64) || !string.IsNullOrEmpty(usr.cv_pdf_base64)
                 })
             .ToListAsync(cancellationToken);
 

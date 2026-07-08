@@ -28,7 +28,7 @@ public class ApplicationController : ControllerBase
 
     [Authorize(Roles = "CANDIDATE")]
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] string job_offer_id, [FromForm] string cv_url, IFormFile? cv_pdf)
+    public async Task<IActionResult> Create([FromForm] string job_offer_id, [FromForm] string? cv_url, IFormFile? cv_pdf)
     {
         string? cvBase64 = null;
 
@@ -43,6 +43,12 @@ public class ApplicationController : ControllerBase
             using var ms = new MemoryStream();
             await cv_pdf.CopyToAsync(ms);
             cvBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+
+        if (!string.IsNullOrWhiteSpace(cv_url) &&
+            !Uri.TryCreate(cv_url.Trim(), UriKind.Absolute, out _))
+        {
+            return BadRequest(new { error = "El enlace del CV no tiene un formato valido." });
         }
 
         string id;
@@ -60,7 +66,8 @@ public class ApplicationController : ControllerBase
         }
 
         // US016 - Si se subió el PDF, intenta calcular el Match Score automáticamente.
-        if (cvBase64 != null)
+        var application = await _context.Applications.FindAsync(id);
+        if (!string.IsNullOrEmpty(application?.cv_pdf_base64))
         {
             try
             {
@@ -72,7 +79,17 @@ public class ApplicationController : ControllerBase
             }
         }
 
-        return Ok(new { id });
+        var candidateId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var candidate = string.IsNullOrWhiteSpace(candidateId)
+            ? null
+            : await _context.Usuarios.FindAsync(int.Parse(candidateId));
+
+        return Ok(new
+        {
+            id,
+            cv_url = candidate?.cv_url,
+            has_cv_pdf = !string.IsNullOrEmpty(candidate?.cv_pdf_base64)
+        });
     }
 
     [Authorize(Roles = "CANDIDATE")]
@@ -150,6 +167,44 @@ public class ApplicationController : ControllerBase
             candidate_id_parsed = parsedId,
             applications_en_db = apps
         });
+    }
+
+    [Authorize(Roles = "EMPLOYER")]
+    [HttpGet("{id}/download-cv")]
+    public async Task<IActionResult> DownloadCv(string id)
+    {
+        var application = await _context.Applications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { error = "Postulacion no encontrada." });
+
+        var employerId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var offer = await _context.JobOffers.FindAsync(application.job_offer_id);
+        if (offer == null || offer.employer_id.ToString() != employerId)
+            return Forbid();
+
+        var candidate = await _context.Usuarios.FindAsync(application.candidate_id);
+        var cvBase64 = !string.IsNullOrEmpty(application.cv_pdf_base64)
+            ? application.cv_pdf_base64
+            : candidate?.cv_pdf_base64;
+
+        if (string.IsNullOrEmpty(cvBase64))
+            return NotFound(new { error = "No hay un PDF de CV asociado a esta postulacion." });
+
+        byte[] pdfBytes;
+        try
+        {
+            pdfBytes = Convert.FromBase64String(cvBase64);
+        }
+        catch (FormatException)
+        {
+            return BadRequest(new { error = "El PDF guardado no tiene un formato valido." });
+        }
+
+        var safeCandidateName = string.IsNullOrWhiteSpace(candidate?.name)
+            ? "candidato"
+            : string.Concat(candidate.name.Where(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_'));
+
+        return File(pdfBytes, "application/pdf", $"CV_{safeCandidateName}_{id}.pdf");
     }
 
     [Authorize(Roles = "EMPLOYER")]

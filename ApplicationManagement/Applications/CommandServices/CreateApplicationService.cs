@@ -37,13 +37,31 @@ public class CreateApplicationService : IRequestHandler<CreateApplicationCommand
             throw new InvalidOperationException("No se puede postular a una vacante cerrada.");
 
         var candidateId = int.Parse(candidateIdClaim);
+        var candidate = await _context.Usuarios.FindAsync(new object[] { candidateId }, cancellationToken);
+        var submittedCvUrl = string.IsNullOrWhiteSpace(request.cv_url) ? null : request.cv_url.Trim();
+        var submittedCvPdf = string.IsNullOrWhiteSpace(request.cv_pdf_base64) ? null : request.cv_pdf_base64;
+        var finalCvUrl = submittedCvUrl ?? candidate?.cv_url;
+        var finalCvPdf = submittedCvPdf ?? candidate?.cv_pdf_base64;
+
+        if (string.IsNullOrWhiteSpace(finalCvUrl) && string.IsNullOrWhiteSpace(finalCvPdf))
+            throw new InvalidOperationException("Debes agregar un enlace o un PDF de tu CV para postular.");
+
         var application = new Application
         {
             job_offer_id = request.job_offer_id,
             candidate_id = candidateId,
-            cv_url = request.cv_url,
-            cv_pdf_base64 = request.cv_pdf_base64
+            cv_url = finalCvUrl ?? "",
+            cv_pdf_base64 = finalCvPdf
         };
+
+        if (candidate != null)
+        {
+            if (submittedCvUrl != null)
+                candidate.cv_url = submittedCvUrl;
+
+            if (submittedCvPdf != null)
+                candidate.cv_pdf_base64 = submittedCvPdf;
+        }
 
         _context.Applications.Add(application);
         _context.Messages.Add(new Message
